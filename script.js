@@ -6,7 +6,7 @@ const jwt = require("jsonwebtoken");
 const {auth,JWT_SECRET} = require("./auth")
 const {UserModel, TodoModel} = require('./db')
 const mongoose = require("mongoose")
-mongoose.connect("mongodb+srv://samchinmaya:nmapscan.chinmaya.2007@samchinmaya.wwsgise.mongodb.net/todo-app-database")
+mongoose.connect("enter your connection url")
 console.log(UserModel)
 app.post('/signup',async (req,res)=>{
   const {email,password,name}= req.body;
