@@ -1,41 +1,39 @@
 const express = require("express");
 const app = express();
+const bcrypt = require("bcrypt")
 app.use(express.json())
 const jwt = require("jsonwebtoken");
 const {auth,JWT_SECRET} = require("./auth")
 const {UserModel, TodoModel} = require('./db')
 const mongoose = require("mongoose")
-mongoose.connect("!!enter your database connection link here")
+mongoose.connect("mongodb+srv://samchinmaya:nmapscan.chinmaya.2007@samchinmaya.wwsgise.mongodb.net/todo-app-database")
 console.log(UserModel)
 app.post('/signup',async (req,res)=>{
-  const email = req.body.email;
-  const password = req.body.password;
-  const name = req.body.name
+  const {email,password,name}= req.body;
+  const saltRounds = 10;
+  const hashedpass = await bcrypt.hash(password, saltRounds)
   await UserModel.create({ 
     email: email,
-    password: password,
+    password: hashedpass,
     name:name
   })
   res.json({message:"your are logged in"})
 })
 app.post('/signin',async (req,res)=>{
-  const email = req.body.email;
-  const password = req.body.password;
-  const user = await UserModel.findOne({
-    email: email,
-    password: password
-  })
-  console.log(user)
-  if (user){
-    const token = jwt.sign({
-      id: user._id.toString()
-    },JWT_SECRET);
-    res.json({
-      token:token
-    })
-  }else{
-    res.status(403).json({message:"invalid credentials!! "})
+  const {email,password}= req.body;
+  const user = await UserModel.findOne({email});
+  if(!user){
+    return res.status(403).json({message:"invalid credentials"})
   }
+  const matchedPass = await bcrypt.compare(password,user.password);
+  if (matchedPass){
+    const token = jwt.sign({id:user._id},JWT_SECRET);
+    res.json({token});
+    
+  }else{
+    res.status(403).json({message:"invalid creds"})
+  }
+  
 })
 app.post('/todo',auth,async (req,res)=>{
   const userId = req.userId;
@@ -43,7 +41,8 @@ app.post('/todo',auth,async (req,res)=>{
   const done = req.body.done;
   await TodoModel.create({
     title:title,
-    done:done
+    done:done,
+    userId:userId
   })
   res.json({userId:userId})
 })
